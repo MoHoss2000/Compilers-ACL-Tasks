@@ -11,12 +11,7 @@ import java.util.*;
  */
 
 public class CfgEpsUnitElim {
-//	variables
-//	terminals
-//	rules
-
-
-    LinkedHashMap<Character, LinkedList<String>> rules;
+    HashMap<Character, HashSet<String>> rules;
     LinkedList<Character> variables;
     LinkedList<Character> terminals;
 
@@ -27,7 +22,7 @@ public class CfgEpsUnitElim {
      *            representation follows the one in the task description
      */
     public CfgEpsUnitElim(String cfg) {
-        rules = new LinkedHashMap<Character, LinkedList<String>>();
+        rules = new HashMap<Character, HashSet<String>>();
         String[] parts = cfg.split("#");
 
         String[] variables = parts[0].split(";");
@@ -47,7 +42,7 @@ public class CfgEpsUnitElim {
             char variable = rule.charAt(0);
             System.out.println(variable);
             String[] variableRules = rule.substring(2).split(",");
-            LinkedList<String> variableRulesList = new LinkedList<String>();
+            HashSet<String> variableRulesList = new HashSet<String>();
 
             Collections.addAll(variableRulesList, variableRules);
             rules.put(variable, variableRulesList);
@@ -60,13 +55,19 @@ public class CfgEpsUnitElim {
         String cfg2 = "S;A;B#a;b#S/ASA,aB;A/B,S;B/b,e";
         String cfg3 = "S;A;B#a;b#S/AS,ASA,S,SA,a,aB;A/B,S;B/b";
 
-        CfgEpsUnitElim instance = new CfgEpsUnitElim(cfg2);
+        String test1 = "S;O;T;A;K;V#c;g;h;s;t#S/gAVA,tOKh;O/A,SsOAO,T,V,e,tVVO;T/A,KTVK,e;A/AThO,K,OSc,S,SOKt,TtTOs;K/A,AgTSs,V,e,gOOO;V/KVKK,cTA";
+        String test2 = "S;A;B;C#a;b;c;d;x#S/aAb,xB;A/Bc,C,c,d;B/CACA,e;C/A,b,e";
+
+        CfgEpsUnitElim instance = new CfgEpsUnitElim(test2);
         System.out.println(instance.rules);
 
         instance.eliminateEpsilonRules();
 //        instance.eliminateUnitRules();
-        System.out.println(instance.rules);
+        System.out.println(instance);
+
     }
+
+
 
     /**
      * @return Returns a formatted string representation of the CFG. The string
@@ -74,97 +75,165 @@ public class CfgEpsUnitElim {
      */
     @Override
     public String toString() {
-        // TODO Auto-generated method stub
-        return null;
+
+        StringBuilder sb = new StringBuilder();
+
+        for (char v : variables) {
+            sb.append(v).append(";");
+        }
+        sb.deleteCharAt(sb.length() - 1);
+        sb.append("#");
+
+        for (char t : terminals) {
+            sb.append(t).append(";");
+        }
+
+        sb.deleteCharAt(sb.length() - 1);
+        sb.append("#");
+
+        for (char v : variables) {
+            sb.append(v).append("/");
+            ArrayList<String> arr = new ArrayList<>(rules.get(v));
+            Collections.sort(arr);
+
+            for (String rule : arr) {
+                sb.append(rule).append(",");
+            }
+            sb.deleteCharAt(sb.length() - 1);
+            sb.append(";");
+        }
+
+        sb.deleteCharAt(sb.length() - 1);
+        return sb.toString();
     }
 
-    /**
-     * Eliminates Epsilon Rules from the grammar
-     */
-    /**
-     * Eliminates Epsilon Rules from the grammar
-     */
+    public static List<String> getPossiblePermutations(String input, char variable) {
+        List<String> permutations = new ArrayList<>();
+
+        permutations.add(input);
+
+
+        for (int i = 0; i < permutations.size(); i++) {
+            String permutation = permutations.get(i);
+            for (int j = 0; j < permutation.length(); j++) {
+                if (permutation.charAt(j) == variable) {
+                    String s =  permutation.substring(0, j) + permutation.substring(j + 1);
+                    if (s.length() == 0)
+                        s = "e";
+                    permutations.add(s);
+                }
+            }
+        }
+
+        return permutations;
+    }
+
     /**
      * Eliminates Epsilon Rules from the grammar
      */
     public void eliminateEpsilonRules() {
-        // For each variable A
-        for (char variable : variables) {
-            LinkedList<String> rulesList = rules.get(variable);
-            LinkedList<String> newRulesList = new LinkedList<String>(rulesList);
+        ArrayList<Character> epsilonVariables = new ArrayList<Character>();
+        HashSet<Character> eliminatedVariables = new HashSet<Character>();
 
-            // For each rule of the form A -> epsilon
-            for (String rule : rulesList) {
-                if (rule.equals("e")) {
-                    // For each rule of the form B -> u
-                    for (char otherVariable : variables) {
-                        LinkedList<String> otherRulesList = rules.get(otherVariable);
-                        for (String otherRule : otherRulesList) {
-                            // If the rule is not an epsilon rule, add it to A's rules
-                            if (!otherRule.equals("e")) {
-                                if (!newRulesList.contains(otherRule)) {
-                                    newRulesList.add(otherRule);
-                                }
-                            }
-                        }
+        for (char v : variables) {
+            if (rules.get(v).contains("e")) {
+                epsilonVariables.add(v);
+            }
+        }
+
+        while (epsilonVariables.size() > 0) {
+            for (char epsVar : epsilonVariables) {
+                eliminatedVariables.add(epsVar);
+                rules.get(epsVar).remove("e");
+
+                for (Character var : variables) {
+                    HashSet<String> newRules = new HashSet<String>();
+
+                    for (String rule : rules.get(var)) {
+                        List<String> permutations = getPossiblePermutations(rule, epsVar);
+                        newRules.addAll(permutations);
                     }
 
-                    // Remove the epsilon rule A -> epsilon
-                    newRulesList.remove(rule);
+                    if (eliminatedVariables.contains(var)) {
+                        newRules.remove("e");
+                    }
+
+                    rules.put(var, newRules);
                 }
             }
 
-            // Update A's rules
-            rules.put(variable, newRulesList);
+            epsilonVariables.clear();
+
+            for (char v : variables) {
+                if (rules.get(v).contains("e")) {
+                    epsilonVariables.add(v);
+                }
+            }
         }
     }
 
-
-
     /**
      * Eliminates Unit Rules from the grammar
      */
-    /**
-     * Eliminates Unit Rules from the grammar
-     */
-//    For each rule, r ∈ R, of the form A −→ B (where B ∈ V) do
-//1 Let R = R − {r}
-//2 For every rule of the form B −→ u ∈ R (where u ∈ (V1 ∪ Σ)+ and
-//u ̸∈ V), let R = R ∪ {A −→ u}.
-//3 For every rule of the form B −→ C ∈ R (where C ∈ V), then unless
-//A −→ C has already been removed, let R = R ∪ {A −→ C}.
+
     public void eliminateUnitRules() {
-        // For each variable A
-        for (char variable : variables) {
-            LinkedList<String> rulesList = rules.get(variable);
-            LinkedList<String> newRulesList = new LinkedList<String>(rulesList);
+        HashMap<Character, HashSet<String>> eliminatedVariables = new HashMap<>();
+        LinkedList<Character> variableProductions = new LinkedList<Character>();
 
-            // For each rule of the form A -> B
+        for (char variable : variables) {
+            HashSet<String> temp = new HashSet<String>();
+            temp.add(variable + "");
+            eliminatedVariables.put(variable, temp);
+        }
+
+
+        for (char variable : variables) {
+            HashSet<String> rulesList = rules.get(variable);
+
             for (String rule : rulesList) {
                 if (rule.length() == 1 && variables.contains(rule.charAt(0))) {
-                    char unitVariable = rule.charAt(0);
-                    LinkedList<String> unitRulesList = rules.get(unitVariable);
-
-                    // For each rule of the form B -> u
-                    for (String unitRule : unitRulesList) {
-                        // If the rule is not a unit rule, add it to A's rules
-                        if (!unitRule.equals(variable + "")) {
-                            if (!newRulesList.contains(unitRule)) {
-                                newRulesList.add(unitRule);
-                            }
-                        }
-                    }
-
-                    // Remove the unit rule A -> B
-                    newRulesList.remove(rule);
+                    variableProductions.add(variable);
+                    break;
                 }
             }
+        }
 
-            // Update A's rules
-            rules.put(variable, newRulesList);
+        while (variableProductions.size() > 0) {
+            for (char variable : variableProductions) {
+                HashSet<String> combinedRules = new HashSet<String>();
+                ;
+                HashSet<String> rulesList = rules.get(variable);
+
+                for (String rule : rulesList) {
+                    if (rule.length() == 1 && variables.contains(rule.charAt(0))) {
+
+
+                        combinedRules.addAll(rulesList);
+                        combinedRules.addAll(rules.get(rule.charAt(0)));
+
+                        eliminatedVariables.get(variable).add(rule);
+                        break;
+                    }
+                }
+
+                HashSet<String> tempSet = new HashSet<>(combinedRules);
+                tempSet.removeAll(eliminatedVariables.get(variable));
+
+                rules.put(variable, tempSet);
+            }
+
+            variableProductions.clear();
+            for (char variable : variables) {
+                HashSet<String> rulesList = rules.get(variable);
+
+                for (String rule : rulesList) {
+                    if (rule.length() == 1 && variables.contains(rule.charAt(0))) {
+                        variableProductions.add(variable);
+                        break;
+                    }
+                }
+            }
         }
     }
-
-
 
 }
