@@ -1,6 +1,5 @@
 package csen1002.main.task6;
 
-import java.sql.SQLOutput;
 import java.util.*;
 
 /**
@@ -52,14 +51,14 @@ public class CfgFirstFollow {
         calculateFirst();
     }
 
-    public static boolean checkSubset(LinkedHashSet<String> a, LinkedHashSet<String> b) {
+    public static boolean isNotSubset(LinkedHashSet<String> a, LinkedHashSet<String> b) {
         for (String s : a) {
             if (!b.contains(s)) {
-                return false;
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 
     public static boolean checkEpsilonInFirstB0ToK(String rule, HashMap<String, LinkedHashSet<String>> first) {
@@ -89,9 +88,15 @@ public class CfgFirstFollow {
     }
 
     public static void main(String[] args) {
-        String test = "S;Z;I;P;B;J;W#b;f;i;m;n;p;s#S/PZb,S,iBbB;Z/II,If,P;I/B,JZPP,SPnJS,SWsI,bBPb,iB;P/JWWfP,S,Ss,e;B/e,pBPBb,sSP;J/BmPZ,Z,iP;W/bZ,mPnWb,pWBfB";
-        CfgFirstFollow cfgFirstFollow = new CfgFirstFollow("S;W;G;A;D;C;P#f;h;l;o;q;s;t#S/A,DPS,DqDDq,qAlS,qDPPo;W/e,lSD,tCShP;G/C,G,S,sDC,sS;A/fPlDf,o;D/PS,WAPs,e,oW,qD;C/G,PDP,PW,W;P/o,q");
-        cfgFirstFollow.follow();
+        String test = "S;W;G;A;D;C;P#f;h;l;o;q;s;t#S/A,DPS,DqDDq,qAlS,qDPPo;W/e,lSD,tCShP;G/C,G,S,sDC,sS;A/fPlDf,o;D/PS,WAPs,e,oW,qD;C/G,PDP,PW,W;P/o,q";
+        String edgeCase = "S;A;B;C#a;b;c#S/SAB,SBC,e;A/aAa,e;B/bB,e;C/cC,e";
+        CfgFirstFollow cfgFirstFollow = new CfgFirstFollow(edgeCase);
+
+        String first = cfgFirstFollow.first();
+        String follow = cfgFirstFollow.follow();
+
+        System.out.println(first);
+        System.out.println(follow);
     }
 
     public void calculateFirst() {
@@ -115,7 +120,6 @@ public class CfgFirstFollow {
                 for (String rule : rules.get(variable)) {
 
                     LinkedHashSet<String> firstA = first.get(variable);
-                    int k = rule.length();
 
                     if (checkEpsilonInFirstB0ToK(rule, first)) {
                         if (!firstA.contains("e")) {
@@ -123,6 +127,8 @@ public class CfgFirstFollow {
                             isChanged = true;
                         }
                     }
+
+                    int k = rule.length();
 
                     for (int i = 0; i < k; i++) {
 
@@ -134,7 +140,7 @@ public class CfgFirstFollow {
                             LinkedHashSet<String> firstOfBiTemp = new LinkedHashSet<>(firstBi);
                             firstOfBiTemp.remove("e");
 
-                            if (!checkSubset(firstOfBiTemp, firstA)) {
+                            if (isNotSubset(firstOfBiTemp, firstA)) {
                                 firstA.addAll(firstOfBiTemp);
                                 isChanged = true;
                             }
@@ -176,26 +182,6 @@ public class CfgFirstFollow {
      * formatted as specified in the task description.
      */
     public String first() {
-
-//        StringBuilder firstString = new StringBuilder();
-//        for (String variable : variables) {
-//            firstString.append(variable).append("/");
-//            LinkedHashSet<String> firstA = first.get(variable);
-//
-//            List<String> firstAList = new ArrayList<>(firstA);
-//            Collections.sort(firstAList);
-//            firstA = new LinkedHashSet<>(firstAList);
-//
-//            for (String s : firstA) {
-//                firstString.append(s);
-//            }
-//            firstString.append(";");
-//        }
-//
-//        firstString.deleteCharAt(firstString.length() - 1);
-//
-//        return firstString.toString();
-//        return first.toString();
         return getStringDecodingForFirstOrFollowSets(first);
     }
 
@@ -233,22 +219,37 @@ public class CfgFirstFollow {
                             String beta = "e";
 
                             if (indexOfBeta < rule.length()) {
-                                beta = rule.charAt(indexOfBeta) + "";
+                                beta = rule.substring(indexOfBeta);
                             }
 
-                            LinkedHashSet<String> firstBetaCopy = new LinkedHashSet<>(first.get(beta));
+                            LinkedHashSet<String> firstBetaCopy = new LinkedHashSet<>(first.get(beta.charAt(0) + ""));
                             LinkedHashSet<String> followB = follow.get(B);
 
                             firstBetaCopy.remove("e");
 
-                            if (!checkSubset(firstBetaCopy, followB)) {
+                            if (isNotSubset(firstBetaCopy, followB)) {
                                 followB.addAll(firstBetaCopy);
                                 isChanged = true;
                             }
 
+//                            System.out.println(beta);
+                            if (beta.length() >= 2) {
+                                if (first.get(beta.charAt(0) + "").contains("e")) {
+
+                                    LinkedHashSet<String> firstBeta1Copy = new LinkedHashSet<>(first.get(beta.charAt(1) + ""));
+                                    firstBeta1Copy.remove("e");
+
+                                    if (isNotSubset(firstBeta1Copy, followB)) {
+                                        followB.addAll(firstBeta1Copy);
+                                        isChanged = true;
+                                    }
+
+                                }
+                            }
+
                             if (checkEpsilonInFirstB0ToK(rule.substring(indexOfBeta), first)) {
                                 LinkedHashSet<String> followA = follow.get(A);
-                                if (!checkSubset(followA, followB)) {
+                                if (isNotSubset(followA, followB)) {
 
                                     followB.addAll(followA);
                                     if (B.equals("W")) {
@@ -268,5 +269,6 @@ public class CfgFirstFollow {
 
         return getStringDecodingForFirstOrFollowSets(follow);
     }
+
 
 }

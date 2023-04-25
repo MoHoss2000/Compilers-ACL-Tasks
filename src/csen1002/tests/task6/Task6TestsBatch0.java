@@ -73,5 +73,11 @@ public class Task6TestsBatch0 {
 		assertEquals("S/$fhloqst;W/floqst;G/floqt;A/$fhloqst;D/floqst;C/floqt;P/floqst", cfgFirstFollow.follow());
 	}
 
+	@Test()
+	public void testEdgeCaseFollow() {
+		CfgFirstFollow cfgFirstFollow= new CfgFirstFollow("S;A;B;C#a;b;c#S/SAB,SBC,e;A/aAa,e;B/bB,e;C/cC,e");
+		assertEquals("S/$abc;A/$abc;B/$abc;C/$abc", cfgFirstFollow.follow());
+	}
+
 }
 
