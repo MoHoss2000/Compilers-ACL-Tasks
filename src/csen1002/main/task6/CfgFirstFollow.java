@@ -134,13 +134,21 @@ public class CfgFirstFollow {
 
                         String ruleTillI = rule.substring(0, i);
 
+
+
                         if (checkEpsilonInFirstB0ToK(ruleTillI, first)) {
+
+
+
                             LinkedHashSet<String> firstBi = first.get(rule.charAt(i) + "");
 
                             LinkedHashSet<String> firstOfBiTemp = new LinkedHashSet<>(firstBi);
                             firstOfBiTemp.remove("e");
 
                             if (isNotSubset(firstOfBiTemp, firstA)) {
+                                if(i==0){
+                                    System.out.println("here");
+                                }
                                 firstA.addAll(firstOfBiTemp);
                                 isChanged = true;
                             }
