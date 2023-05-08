@@ -109,7 +109,6 @@ public class CfgLl1Parser {
         stack.push("S");
 
         while (headIndex <= input.length()) {
-
             String read;
 
             if (headIndex == input.length()) {
@@ -121,7 +120,12 @@ public class CfgLl1Parser {
 
             String stackTop = stack.peek();
 
-//                if stackTop is terminal
+
+            if (stackTop.equals("$") && !read.equals("$")) {
+                derivations.add("ERROR");
+                return derivations;
+            }
+
             if (terminals.contains(stackTop.charAt(0))) {
                 if (stackTop.equals(read)) {
                     stack.pop();
@@ -132,7 +136,8 @@ public class CfgLl1Parser {
                 }
             } else if (variables.contains(stackTop)) {
                 String transition = table.getCellValue(stackTop, read);
-
+                System.out.println(transition);
+//                source of error
                 if (transition.equals("")) {
                     derivations.add("ERROR");
                     return derivations;
@@ -170,6 +175,8 @@ public class CfgLl1Parser {
     public String parse(String input) {
         // TODO Auto-generated method stub
         ParsingTable table = new ParsingTable(this);
+
+        System.out.println(table);
 
         ArrayList<String> derivations = getDerivations(input, table);
         System.out.println(derivations);
