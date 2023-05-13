@@ -229,29 +229,38 @@ public class CfgLl1Parser {
         }
 
         public LinkedHashSet<String> getFirstAlpha(String alpha) {
+            LinkedHashSet<String> firstAlpha = new LinkedHashSet<>();
+
+            if(alpha.equals("e")) {
+                firstAlpha.add("e");
+                return firstAlpha;
+            }
+
             for (int i = 0; i < alpha.length(); i++) {
                 String A = alpha.charAt(i) + "";
 
-                LinkedHashSet<String> firstA;
-
                 if (parser.terminals.contains(A.charAt(0))) {
-                    firstA = new LinkedHashSet<>();
-                    firstA.add(alpha.charAt(i) + "");
-                } else if (A.equals("e")) {
-                    firstA = new LinkedHashSet<>();
-                    firstA.add("e");
+//                    firstAlpha = new LinkedHashSet<>();
+                    firstAlpha.add(alpha.charAt(i) + "");
+                    return firstAlpha;
                 } else {
-                    firstA = parser.first.get(A);
+                    LinkedHashSet<String> firstA = parser.first.get(A);
+                    firstAlpha.addAll(firstA);
+
+                    if(!firstA.contains("e")){
+                        return firstAlpha;
+                    }
                 }
 
-                if (!firstA.contains("e")) {
-                    return firstA;
-                }
+//                if (!firstAlpha.contains("e")) {
+//                    return firstAlpha;
+//                }
             }
 
-            LinkedHashSet<String> result = new LinkedHashSet<>();
-            result.add("e");
-            return result;
+//            LinkedHashSet<String> result = new LinkedHashSet<>();
+            firstAlpha.add("e");
+            System.out.println(firstAlpha);
+            return firstAlpha;
         }
 
         public String getCellValue(String variable, String terminal) {
