@@ -7,7 +7,6 @@
  */
 
 grammar Task8;
-
 /**
  * This rule is to check your grammar using "ANTLR Preview"
  */
